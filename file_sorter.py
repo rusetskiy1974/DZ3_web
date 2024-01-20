@@ -37,10 +37,12 @@ class FileSorter:
         except OSError:
             print(f'Не вдалося видалити папку {folder.resolve()}')
 
+    def func(self, value):
+        exec(value)
+
     def sort_files(self):
         parser.scan(self.folder)
-        threads = []
-        # lock = RLock
+
         container = (
             "for file in parser.IMAGES:\n self.handle_media(file, self.folder/'images')",
             "for file in parser.VIDEO:\n self.handle_media(file, self.folder/'video')",
@@ -50,19 +52,13 @@ class FileSorter:
             "for file in parser.ARCHIVES:\n self.handle_archive(file, self.folder/'archives')",
             "for folder_to_handle in parser.FOLDERS[::-1]:\n self.handle_folder(folder_to_handle)",
         )
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            executor.map(self.func, container)
+
+
         #
-        # def implementation(parser.IMAGES)
-        # with concurrent.futures.ThreadPoolExecutor(max_workers=7) as executor:
-        #     executor.map(implementation, parser)
-        #
-        for action in container:
-            thread = Thread(exec(action))
-            threads.append(thread)
-            thread.start()
-        #
-        for thread in threads:
-            thread.join()
-        # thread1 = Thread()
+
         # for file in parser.IMAGES:
         #     self.handle_media(file, self.folder / 'images')
         #

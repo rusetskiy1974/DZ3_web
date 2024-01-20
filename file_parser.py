@@ -77,22 +77,3 @@ def scan(folder: Path) -> None:
     for th in threads:
         th.join()
 
-# def scan(folder: Path) -> None:
-#     for item in folder.iterdir():
-#         if item.is_dir():
-#             if item.name not in ('archives', 'video', 'audio', 'documents', 'images', 'OTHER'):
-#                 FOLDERS.append(item)
-#                 scan(item)
-#             continue
-#         ext = get_extension(item.name)
-#         full_name = folder / item.name
-#         if not ext:
-#             OTHER.append(full_name)
-#         else:
-#             try:
-#                 container = REGISTER_EXTENSIONS[ext]
-#                 EXTENSIONS.add(ext)
-#                 container.append(full_name)
-#             except KeyError:
-#                 UNKNOWN.add(ext)
-#                 OTHER.append(full_name)
