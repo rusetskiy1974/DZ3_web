@@ -71,6 +71,6 @@ def scan(folder: Path) -> None:
                     OTHER.append(full_name)
     scan_folders(folder)
 
-    for th in threads:
-        th.join()
+    for thread_ in threads:
+        thread_.join()
 
