@@ -1,5 +1,5 @@
 from pathlib import Path
-from threading import Thread, RLock
+from threading import Thread
 
 
 IMAGES = []
@@ -44,7 +44,6 @@ def get_extension(file_name: str) -> str:
 
 def scan(folder: Path) -> None:
     threads = []
-    lock = RLock()
 
     def scan_folders(folder_):
         for item in folder_.iterdir():
@@ -52,12 +51,10 @@ def scan(folder: Path) -> None:
                 if item.name not in ('archives', 'video', 'audio', 'documents', 'images', 'OTHER'):
                     FOLDERS.append(item)
                     if item.parent == folder:
-                        with lock:
-                            thread = Thread(target=scan_folders, args=(item, ))
-                            threads.append(thread)
-                            thread.start()
-                            continue
-                    # else:
+                        thread = Thread(target=scan_folders, args=(item, ))
+                        threads.append(thread)
+                        thread.start()
+                        continue
                     scan_folders(item)
                 continue
             ext = get_extension(item.name)
@@ -73,7 +70,7 @@ def scan(folder: Path) -> None:
                     UNKNOWN.add(ext)
                     OTHER.append(full_name)
     scan_folders(folder)
-    print(len(threads))
+
     for th in threads:
         th.join()
 

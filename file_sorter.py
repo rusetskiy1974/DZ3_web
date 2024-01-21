@@ -3,9 +3,7 @@ import shutil
 
 from normalize import normalize
 import file_parser as parser
-import concurrent.futures
-from threading import Thread, RLock
-
+from threading import Thread, Semaphore, Barrier
 
 
 class FileSorter:
@@ -37,27 +35,31 @@ class FileSorter:
         except OSError:
             print(f'Не вдалося видалити папку {folder.resolve()}')
 
-    def func(self, value):
-        exec(value)
+    def func(self, condition, action):
+        with condition:
+            exec(action)
 
     def sort_files(self):
         parser.scan(self.folder)
+        threads = []
 
         container = (
-            "for file in parser.IMAGES:\n self.handle_media(file, self.folder/'images')",
-            "for file in parser.VIDEO:\n self.handle_media(file, self.folder/'video')",
             "for file in parser.AUDIO:\n self.handle_media(file, self.folder/'audio')",
-            "for file in parser.DOCUMENTS:\n self.handle_media(file, self.folder/'documents')",
             "for file in parser.OTHER:\n self.handle_other(file, self.folder/'OTHER')",
             "for file in parser.ARCHIVES:\n self.handle_archive(file, self.folder/'archives')",
-            "for folder_to_handle in parser.FOLDERS[::-1]:\n self.handle_folder(folder_to_handle)",
+            "for file in parser.IMAGES:\n self.handle_media(file, self.folder/'images')",
+            "for file in parser.VIDEO:\n self.handle_media(file, self.folder/'video')",
+            "for file in parser.DOCUMENTS:\n self.handle_media(file, self.folder/'documents')",
         )
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            executor.map(self.func, container)
+        pool = Semaphore(3)
+        for action in container:
+            thread = Thread(target=self.func, args=(pool, action, ))
+            threads.append(thread)
+            thread.start()
 
-
-        #
+        for thread in threads:
+            thread.join()
 
         # for file in parser.IMAGES:
         #     self.handle_media(file, self.folder / 'images')
@@ -76,9 +78,9 @@ class FileSorter:
         #
         # for file in parser.ARCHIVES:
         #     self.handle_archive(file, self.folder / 'archives')
-        #
-        # for folder_to_handle in parser.FOLDERS[::-1]:
-        #     self.handle_folder(folder_to_handle)
+
+        for folder_to_handle in parser.FOLDERS[::-1]:
+            self.handle_folder(folder_to_handle)
 
 
 
